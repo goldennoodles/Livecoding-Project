@@ -7,42 +7,30 @@ using UnityEngine.UI;
 public class Movement : MonoBehaviour
 {
 
-    public int MovementLeft = 20;
-    public int MovementRight = 20;
+    public int MovementHorizontal = 20;       private float _distanceFromTheGround;
+    public int MovementVerticle = 20;         private float _liftHeight = 25f;
+    public int MovementRight = 20;            private int _jumpHeight = 350;
+    public int CoinAmount;                    private Vector2 _startPos;
+    public bool shouldRotate = false;         public Rigidbody _rg;
+    public bool _normalControls = true;       private Text _score;
+                                              private GameObject _camMove;                                     
 
-    [HideInInspector]
-    public int CoinAmount;
-
-    private int _jumpHeight = 300;
-    private float _distanceFromTheGround;
-
-    private Rigidbody _rg;
-    private Vector2 _startPos;
-
-    private float _liftHeight = 25f;
-
-    public bool shouldRotate = false;
-
-    private Text _score;
 
     void Start()
     {
-
         _rg = GetComponent<Rigidbody>();
 
         Transform trans = GetComponent<Transform>();
         _startPos = trans.position;
+        _camMove = GameObject.Find("Main Camera");
 
 
     }
 
     void Update()
     {
-
         printScore();
-
         controls();
-
     }
 
     void FixedUpdate()
@@ -52,11 +40,8 @@ public class Movement : MonoBehaviour
         if (Physics.Raycast(transform.position, -Vector3.up, out hit, TriggerMask))
         {
             _distanceFromTheGround = hit.distance;
-
         }
     }
-
-
 
     void OnTriggerEnter(Collider other)
     {
@@ -72,6 +57,12 @@ public class Movement : MonoBehaviour
             transform.position = new Vector3(_startPos.x, _startPos.y);
         }
 
+        if (other.tag == "BoundryLeft")
+        {
+            _rg.velocity = Vector3.zero;
+            //MovementHorizontal = 0;
+        }
+
     }
 
     void OnTriggerStay(Collider other)
@@ -79,21 +70,9 @@ public class Movement : MonoBehaviour
         if (other.tag == "BoundryRight")
         {
             _rg.velocity = Vector2.zero;
-            MovementRight = 0;
-
         }
 
-        if (other.tag == "BoundryLeft")
-        {
-            _rg.velocity = Vector3.zero;
-            MovementLeft = 0;
-            shouldRotate = true;
-
-        }
-        else
-        {
-            shouldRotate = false;
-        }
+        //---------//
 
         if (other.tag == "OutOfBounds")
         {
@@ -105,7 +84,7 @@ public class Movement : MonoBehaviour
             _rg.AddForce(new Vector2(0, _liftHeight), ForceMode.Acceleration);
         }
 
-        MovementLeft = 20;
+        MovementHorizontal = 20;
         MovementRight = 20;
     }
 
@@ -114,22 +93,62 @@ public class Movement : MonoBehaviour
     {
         _score = GameObject.Find("Score").GetComponent<Text>();
         _score.text = "Score is: " + CoinAmount.ToString();
-
     }
 
     void controls()
     {
+        //---------------------------------------------------------------//
 
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+        GameObject _cameraScript;
+
+        _cameraScript = GameObject.Find("Main Camera");
+
+        //---------------------------------------------------------------//
+
+        if (_normalControls == true && _camMove.GetComponent<CameraController>()._invert == false)
         {
-            _rg.AddForce(new Vector3(-MovementLeft, 0), ForceMode.Force);
+            if (Input.GetKey(KeyCode.A))
+            {
+                _rg.AddForce(new Vector3(-MovementHorizontal, 0), ForceMode.Force);
+            }
+
+            if (Input.GetKey(KeyCode.D))
+            {
+                _rg.AddForce(new Vector3(MovementHorizontal, 0), ForceMode.Force);
+            }
         }
 
-        if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+        if (_normalControls == false)
         {
-            _rg.AddForce(new Vector3(MovementRight, 0), ForceMode.Force);
+            if (Input.GetKey(KeyCode.A))
+            {
+                _rg.AddForce(new Vector3(0, 0, -MovementVerticle), ForceMode.Force);
+            }
+
+            if (Input.GetKey(KeyCode.D))
+            {
+                _rg.AddForce(new Vector3(0, 0, MovementVerticle), ForceMode.Force);
+            }
         }
 
+        if (_camMove.GetComponent<CameraController>()._invert == true )
+        {
+            if (Input.GetKey(KeyCode.A))
+            {
+                _rg.AddForce(new Vector3(MovementHorizontal, 0), ForceMode.Force);
+                Debug.Log("Invert == A");
+
+            }
+
+            if (Input.GetKey(KeyCode.D))
+            {
+                _rg.AddForce(new Vector3(-MovementHorizontal, 0), ForceMode.Force);
+                Debug.Log("Invert == D");
+
+            }
+
+            Debug.Log("Invert == true");
+        }
 
         if (_distanceFromTheGround <= 0.6f)
         {
